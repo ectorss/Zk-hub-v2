@@ -1,6 +1,6 @@
 -- ============================================
 -- ZK HUB 🎯 - AIM ASSIST + ESP + HITBOX
--- DESIGN EXCLUSIVO - v3.0.0
+-- DESIGN EXCLUSIVO - v3.0.0 (FINAL)
 -- RAINBOW FOV | FPS COUNTER | FPS BOOSTER
 -- ============================================
 
@@ -614,4 +614,4 @@ local function createSlider(parent, y, text, var, min, max, default, suffix)
             update(input)
         end
     end)
-    sliderBtn.Inp
+    slide
