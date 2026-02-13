@@ -489,99 +489,129 @@ RunService.RenderStepped:Connect(function()
     UpdateHitbox()
 end)
 
--- ========== INTERFACE ==========
-local function CreateUI()
-    pcall(function()
-        local old = playerGui:FindFirstChild("ZkHub")
-        if old then old:Destroy() end
+-- ========== FUNÇÕES AUXILIARES DA UI ==========
+local function createToggle(parent, y, text, var, default)
+    Config[var] = default
+
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(1, -20, 0, 45)
+    frame.Position = UDim2.new(0, 10, 0, y)
+    frame.BackgroundTransparency = 1
+
+    local lbl = Instance.new("TextLabel", frame)
+    lbl.Text = text
+    lbl.Size = UDim2.new(0.7, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 0, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Colors.Text
+    lbl.TextSize = 16
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(0, 70, 0, 30)
+    btn.Position = UDim2.new(1, -70, 0.5, -15)
+    btn.TextColor3 = Colors.Text
+    btn.TextSize = 16
+    btn.Font = Enum.Font.GothamBold
+    btn.BorderSizePixel = 0
+    btn.AutoButtonColor = false
+
+    local btnCorner = Instance.new("UICorner", btn)
+    btnCorner.CornerRadius = UDim.new(0, 8)
+
+    local function updateToggleVisual()
+        btn.BackgroundColor3 = Config[var] and Colors.Success or Colors.Inactive
+        btn.Text = Config[var] and "ON" or "OFF"
+    end
+
+    updateToggleVisual()
+
+    btn.MouseButton1Click:Connect(function()
+        Config[var] = not Config[var]
+        updateToggleVisual()
+        Notify(text .. " " .. (Config[var] and "ON" or "OFF"))
+
+        if var == "FPSBooster" then
+            ApplyFPSBooster(Config[var])
+        end
     end)
 
-    RunService.Heartbeat:Wait()
-
-    UI = Instance.new("ScreenGui")
-    UI.Name = "ZkHub"
-    UI.Parent = playerGui
-    UI.ResetOnSpawn = false
-    UI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    UI.DisplayOrder = 1000
-
-    local mainFrame = Instance.new("Frame", UI)
-    mainFrame.Name = "MainFrame"
-    mainFrame.Size = UDim2.new(0, 520, 0, 720)
-    mainFrame.Position = UDim2.new(0.5, -260, 0.5, -360)
-    mainFrame.BackgroundColor3 = Colors.Background
-    mainFrame.Active = true
-    mainFrame.Draggable = true
-    mainFrame.Visible = false
-
-    local frameCorner = Instance.new("UICorner", mainFrame)
-    frameCorner.CornerRadius = UDim.new(0, 15)
-
-    local frameStroke = Instance.new("UIStroke", mainFrame)
-    frameStroke.Color = Color3.fromRGB(20, 20, 25)
-    frameStroke.Thickness = 1
-    frameStroke.Transparency = 0.8
-
-    local header = Instance.new("Frame", mainFrame)
-    header.Size = UDim2.new(1, 0, 0, 70)
-    header.BackgroundColor3 = Colors.Surface
-    header.BorderSizePixel = 0
-
-    local headerCorner = Instance.new("UICorner", header)
-    headerCorner.CornerRadius = UDim.new(0, 15)
-
-    local title = Instance.new("TextLabel", header)
-    title.Size = UDim2.new(1, -50, 0.5, 0)
-    title.Position = UDim2.new(0, 15, 0, 5)
-    title.BackgroundTransparency = 1
-    title.Text = "🎯 ZK HUB"
-    title.TextColor3 = Colors.Text
-    title.TextSize = 26
-    title.Font = Enum.Font.GothamBold
-    title.TextXAlignment = Enum.TextXAlignment.Left
-
-    local version = Instance.new("TextLabel", header)
-    version.Size = UDim2.new(1, -50, 0.5, 0)
-    version.Position = UDim2.new(0, 15, 0, 35)
-    version.BackgroundTransparency = 1
-    version.Text = "v3.0.0 // Rainbow FOV • FPS Boost"
-    version.TextColor3 = Colors.TextDim
-    version.TextSize = 14
-    version.Font = Enum.Font.Gotham
-    version.TextXAlignment = Enum.TextXAlignment.Left
-
-    local closeMainBtn = Instance.new("TextButton", header)
-    closeMainBtn.Size = UDim2.new(0, 40, 0, 40)
-    closeMainBtn.Position = UDim2.new(1, -50, 0.5, -20)
-    closeMainBtn.BackgroundColor3 = Colors.Danger
-    closeMainBtn.Text = "✕"
-    closeMainBtn.TextColor3 = Colors.Text
-    closeMainBtn.TextSize = 22
-    closeMainBtn.Font = Enum.Font.GothamBold
-    closeMainBtn.BorderSizePixel = 0
-    closeMainBtn.AutoButtonColor = false
-
-    closeMainBtn.MouseButton1Click:Connect(function()
-        UI:Destroy()
-        ClearESP()
-        FPSText.Visible = false
-        ApplyFPSBooster(false)
-    end)
-
-    local contentFrame = Instance.new("ScrollingFrame", mainFrame)
-    contentFrame.Size = UDim2.new(1, -20, 1, -100)
-    contentFrame.Position = UDim2.new(0, 10, 0, 80)
-    contentFrame.BackgroundTransparency = 1
-    contentFrame.ScrollBarThickness = 4
-    contentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-
-    -- Funções auxiliares (createToggle, createSlider) omitidas por brevidade, mas devem estar aqui.
-    -- No seu código completo, você já as tem. Vou manter resumido, mas no GitHub você deve colar o código integral.
-
-    -- ... (todo o resto da interface que você já tinha) ...
-
-    print("ZK HUB carregado com sucesso!")
+    return 50
 end
 
-CreateUI()
-Notify("ZK HUB v3.0 | Rainbow FOV • FPS Counter • Booster")
+local function createSlider(parent, y, text, var, min, max, default, suffix)
+    Config[var] = default
+
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(1, -20, 0, 65)
+    frame.Position = UDim2.new(0, 10, 0, y)
+    frame.BackgroundTransparency = 1
+
+    local lbl = Instance.new("TextLabel", frame)
+    lbl.Text = text
+    lbl.Size = UDim2.new(0.6, 0, 0, 25)
+    lbl.Position = UDim2.new(0, 0, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Colors.Text
+    lbl.TextSize = 16
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local valLbl = Instance.new("TextLabel", frame)
+    valLbl.Size = UDim2.new(0.4, -10, 0, 25)
+    valLbl.Position = UDim2.new(0.6, 0, 0, 0)
+    valLbl.BackgroundTransparency = 1
+    valLbl.Text = tostring(default) .. (suffix or "")
+    valLbl.TextColor3 = Colors.Primary
+    valLbl.TextSize = 18
+    valLbl.Font = Enum.Font.GothamBold
+    valLbl.TextXAlignment = Enum.TextXAlignment.Right
+
+    local bg = Instance.new("Frame", frame)
+    bg.Size = UDim2.new(1, 0, 0, 20)
+    bg.Position = UDim2.new(0, 0, 0, 30)
+    bg.BackgroundColor3 = Colors.Inactive
+    bg.BorderSizePixel = 0
+
+    local bgCorner = Instance.new("UICorner", bg)
+    bgCorner.CornerRadius = UDim.new(0, 10)
+
+    local fill = Instance.new("Frame", bg)
+    fill.Size = UDim2.new((default-min)/(max-min), 0, 1, 0)
+    fill.BackgroundColor3 = Colors.Primary
+    fill.BorderSizePixel = 0
+
+    local fillCorner = Instance.new("UICorner", fill)
+    fillCorner.CornerRadius = UDim.new(0, 10)
+
+    local sliderBtn = Instance.new("TextButton", bg)
+    sliderBtn.Size = UDim2.new(1, 0, 1, 0)
+    sliderBtn.BackgroundTransparency = 1
+    sliderBtn.Text = ""
+
+    local dragging = false
+    local function update(input)
+        local pos = input.Position
+        local absPos = bg.AbsolutePosition
+        local absSize = bg.AbsoluteSize.X
+        local rel = math.clamp(pos.X - absPos.X, 0, absSize)
+        local percent = rel / absSize
+        local value = math.floor(min + (max - min) * percent)
+        Config[var] = value
+        valLbl.Text = tostring(value) .. (suffix or "")
+        fill.Size = UDim2.new(percent, 0, 1, 0)
+    end
+
+    sliderBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            update(input)
+        end
+    end)
+    sliderBtn.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
+        end
+    end)
+    sliderBtn.Inp
